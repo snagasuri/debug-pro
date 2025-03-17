@@ -59,3 +59,6 @@ yarn-error.log*
 
 # Redis dump
 dump.rdb
+
+# Test configuration
+pytest.ini
