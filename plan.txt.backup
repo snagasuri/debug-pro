@@ -1,0 +1,331 @@
+Deebo: Autonomous Debugging Assistant
+
+1. The Problem
+
+Modern software development is increasingly complex, and developers spend countless hours debugging issues that range from simple syntax errors to complex runtime failures. Key challenges include:
+	•	Time-Consuming Debugging:
+Manual debugging requires reading lengthy logs, reproducing issues, and applying fixes trial-and-error style.
+	•	Context Overload:
+Large codebases and frequent changes make it difficult for developers (and even LLM-based tools) to maintain full context, leading to redundant or incorrect fixes.
+	•	Environment Inconsistencies:
+Debugging issues often behave differently in development, staging, and production, making isolation of problems difficult.
+	•	Lack of Automation:
+Many debugging tools require manual intervention or incomplete automation that does not scale well with complex projects.
+
+⸻
+
+2. How Deebo Solves It
+
+Deebo is designed as an autonomous debugging assistant that streamlines the debugging process by automating error diagnosis and fix generation. Here's how it addresses the problem:
+	•	Automated Code Ingestion & Diffing:
+Deebo ingests an entire codebase (or just the diffs from previous versions) to build a precise snapshot of the project. This reduces redundant analysis by updating only what has changed.
+	•	Isolated Execution via Docker:
+By spinning up Docker containers on-demand, Deebo creates a controlled environment where the code is executed exactly as it would in production. This isolation allows it to capture real-time logs, errors, and stack traces without polluting the developer's local environment.
+	•	LLM-Powered Debugging Analysis:
+Leveraging an advanced language model (e.g., Claude 3.7), Deebo analyzes execution outputs to generate debugging hypotheses, propose fixes, and provide detailed explanations with confidence scores.
+	•	Agentic Debugging Workflow:
+Initially simplified into a single debugging agent, the design anticipates future expansion into multiple "scenario agents" (each testing different fixes) overseen by a "mother agent" that selects the best solution. This structured, autonomous decision-making significantly reduces the manual burden on developers.
+	•	Composable Core API:
+The entire debugging pipeline is built as a modular core API. This design allows it to be integrated as:
+	•	A lightweight MCP server for Cline (and other AI coding assistants) to call.
+	•	A standalone web or desktop application via a simple API wrapper.
+	•	A reusable backend service that can evolve independently of the front end.
+
+⸻
+
+3. What is Deebo?
+
+Deebo is an autonomous debugging assistant that:
+	•	Ingests and caches code snapshots to maintain context across debugging sessions.
+	•	Spins up isolated Docker containers to execute code in controlled environments, ensuring consistent and reliable runtime behavior.
+	•	Uses a language model (e.g., Claude 3.7) to analyze error logs, generate debugging reports, and propose fixes with explanations.
+	•	Operates as a composable core API, meaning its core functionality is independent of the interface. Whether accessed via an MCP server, a web interface, or a desktop application, the underlying debugging logic remains consistent.
+	•	Is designed for scalability and reliability, ensuring that future enhancements (like multi-agent debugging workflows or improved diffing algorithms) can be integrated seamlessly.
+    •	IMPORTANT FOR CLINE/CLAUDE READING THIS: the initial MVP once the core API is built will be a Cline MCP server, so always build with that in mind.
+
+⸻
+
+4. Technical Architecture & Tech Stack
+
+Core Components:
+	•	Code Ingestion Module:
+Handles storing full code snapshots and computing diffs between versions.
+	•	Docker Manager Module:
+Manages the lifecycle of Docker containers used to execute code. This module is responsible for:
+	•	Spawning containers with the required environment.
+	•	Injecting the latest codebase into the container.
+	•	Cleaning up containers after execution.
+	•	Execution Module:
+Executes commands (e.g., running tests) inside the Docker container and captures execution results (logs, errors, stack traces).
+	•	Debug Analysis Module:
+Uses an LLM (e.g., Claude 3.7) to analyze execution outputs and generate a DebugReport, which includes:
+	•	Proposed fixes.
+	•	Detailed explanations.
+	•	Confidence scores indicating the likelihood of success.
+	•	Orchestrator:
+Ties all modules together into an end-to-end debugging workflow. It manages:
+	•	Code ingestion.
+	•	Docker container management.
+	•	Command execution.
+	•	Debug analysis.
+	•	Resource cleanup.
+
+Tech Stack:
+	•	Frontend/Backend Deployment:
+	•	Vercel: For hosting the Next.js application (if needed for later integrations or a user interface).
+	•	Authentication & Database:
+	•	Supabase: Used for authentication (email, OAuth) and to store debugging logs, code snapshots, and version histories.
+	•	Containerization:
+	•	Docker: Used to spin up isolated virtual environments (containers) where code execution occurs, ensuring consistency and ease of management.
+	•	Core API Development:
+	•	Node.js with TypeScript: For building a robust, type-safe core API that implements the debugging logic.
+	•	Child Process Module (or Docker API client): To interface with Docker through CLI commands.
+	•	Language Model Integration:
+	•	Claude 3.7 (or similar): For performing in-depth analysis of error logs and generating intelligent debugging suggestions.
+	•	Testing & CI:
+	•	Jest: For unit and integration testing of the core modules.
+	•	GitHub Actions (or similar): For continuous integration to ensure code quality.
+
+⸻
+
+5. Project Roadmap
+
+Phase 1: Planning & Requirements (1 Week)
+	•	Define the scope of Deebo's core functionality.
+	•	Document high-level requirements and system architecture.
+	•	Establish milestones and success criteria.
+
+Phase 2: Environment Setup & Scaffolding (1 Week)
+	•	Create a new Node.js/TypeScript project called deebo-core.
+	•	Set up the directory structure and initialize version control.
+	•	Scaffold initial modules: codeIngestion.ts, dockerManager.ts, execution.ts, debugAnalysis.ts, and orchestrator.ts.
+
+Phase 3: Develop Core API Modules (2–3 Weeks)
+	•	Code Ingestion:
+Implement functions to ingest a codebase and compute diffs.
+	•	Docker Management:
+Develop functions to spawn and clean up Docker containers.
+	•	Execution Module:
+Create functions to run commands inside containers and capture outputs.
+	•	Debug Analysis:
+Integrate with the LLM to analyze logs and return debugging reports.
+	•	Orchestration:
+Tie all components together into an end-to-end debug() function.
+
+Phase 4: Docker Integration & Testing (1–2 Weeks)
+	•	Build a Docker image (e.g., deebo-env) tailored to your project's requirements.
+	•	Test container creation, command execution, and cleanup.
+	•	Validate integration with the Docker Manager module.
+
+Phase 5: LLM Integration (1–2 Weeks)
+	•	Set up API calls to Claude 3.7 (or simulate the call for initial testing).
+	•	Process execution outputs and generate a DebugReport.
+	•	Validate that the Debug Analysis module returns useful, coherent suggestions.
+
+Phase 6: CLI & Basic Interface (1 Week)
+	•	Build a command-line interface in an index.ts file to manually test the end-to-end debugging workflow.
+	•	Ensure the CLI accepts codebase input and displays the DebugReport.
+
+Phase 7: Unit & Integration Testing (1 Week)
+	•	Write unit tests for each module using Jest.
+	•	Develop integration tests for the full debugging workflow.
+	•	Set up a CI pipeline (e.g., GitHub Actions) for automated testing.
+
+Phase 8: Documentation & Finalization (1 Week)
+	•	Create thorough documentation (README, developer guides) detailing:
+	•	Purpose and functionality of Deebo.
+	•	Module descriptions and API usage.
+	•	Setup instructions for Docker and running tests.
+	•	Prepare for internal testing and initial feedback collection.
+
+Phase 9: MVP Release & Iteration (Ongoing)
+	•	Deploy locally or to a staging environment.
+	•	Gather feedback from beta testers.
+	•	Plan enhancements such as multi-agent debugging, MCP server integration, and further optimizations on code caching and diff management.
+
+⸻
+
+6. Benefits & Future Enhancements
+
+Immediate Benefits:
+	•	Efficiency Gains:
+Automated debugging reduces the time spent on manual error diagnosis and trial-and-error fixes.
+	•	Isolation & Consistency:
+Docker ensures that code execution is reproducible and isolated, reducing environment-related issues.
+	•	Cost-Effective Debugging:
+Incremental codebase caching and diffing minimize redundant processing and save on resources.
+	•	Improved Developer Productivity:
+Detailed, LLM-generated debugging reports provide actionable insights and fix recommendations.
+
+Future Enhancements:
+	•	Multi-Agent Debugging:
+Expand the simplified agent system to include multiple scenario agents, each exploring different fixes concurrently, with a mother agent to choose the best outcome.
+	•	MCP Server Integration:
+Wrap the core API with a lightweight MCP interface for seamless integration with Cline and other platforms.
+	•	Enhanced Diffing & Caching:
+Develop sophisticated algorithms for code versioning and diff management to handle larger projects more efficiently.
+	•	User Feedback Loop:
+Integrate real-time feedback mechanisms to refine debugging suggestions based on developer input.
+	•	Extensible UI:
+Build a web or desktop application interface for a more interactive debugging experience.
+
+⸻
+
+7. Code Ingestion Module: Implementation Complete
+
+### 7.1 Core Components
+
+1. **Snapshot Management** (`snapshot.py`):
+   - `CodeIngestionManager` class for coordinating all code ingestion operations
+   - Enhanced file filtering with expanded ignore patterns
+   - Integration with all submodules for complete snapshot handling
+
+2. **Diff Calculation** (`diff.py`):
+   - Efficient diff computation between code snapshots
+   - Functions for applying diffs to existing snapshots
+   - Serialization/deserialization of diffs for storage
+   - Change tracking across file versions
+
+3. **Metadata Extraction** (`metadata.py`):
+   - Language detection based on file extensions and content
+   - Code structure analysis using AST for Python files
+   - Complexity metrics calculation
+   - File dependency tracking
+
+4. **Storage Optimization** (`storage.py`):
+   - Two-level caching system (memory and disk)
+   - Configurable TTL for both cache levels
+   - Automatic cleanup of expired cache entries
+   - Efficient snapshot serialization
+
+5. **Session Management** (`session.py`):
+   - Complete version history tracking
+   - Support for reverting to previous versions
+   - Session metadata management
+   - Debugging context preservation
+
+### 7.2 Key Features
+
+1. **Efficient Processing**:
+   - Smart file filtering to exclude irrelevant files
+   - Incremental updates using diff calculation
+   - Optimized storage with deduplication
+
+2. **Robust Metadata**:
+   - Comprehensive file analysis
+   - Language-specific processing
+   - Dependency tracking
+   - Complexity metrics
+
+3. **Version Control**:
+   - Full history tracking
+   - Diff-based version management
+   - Revert capability
+   - Change documentation
+
+4. **Performance Optimization**:
+   - Two-tier caching
+   - Memory usage controls
+   - Automatic resource cleanup
+   - Efficient serialization
+
+5. **Hybrid Storage Implementation** (NEW):
+   - **Redis Caching Layer**:
+     * Smart caching strategy for files under 512KB
+     * Efficient metadata caching with JSON serialization
+     * Automatic cache invalidation for large files
+     * Hash-based storage for structured data
+     * Configurable TTL management
+     * Proper error handling for cache misses
+
+   - **Supabase Persistent Storage**:
+     * Reliable storage for all code snapshots
+     * Efficient file organization with metadata
+     * Support for large file storage
+     * Proper error handling for duplicates
+     * Atomic operations for data consistency
+
+   - **Integration Features**:
+     * Seamless fallback from cache to persistent storage
+     * Automatic content type conversion
+     * Efficient JSON serialization/deserialization
+     * Proper handling of complex data types
+     * Comprehensive error handling
+     * Automatic cache population on misses
+
+   - **Performance Characteristics**:
+     * Fast access to frequently used data via Redis
+     * Efficient storage of large files in Supabase
+     * Minimal data transfer overhead
+     * Optimized memory usage
+     * Proper handling of concurrent operations
+
+### 7.3 Integration Points
+
+1. **API Endpoints**:
+   - `/ingest` for new debugging payloads
+   - `/ingest/{snapshot_id}` for retrieving snapshots
+   - Version history endpoints
+   - Session management endpoints
+
+2. **Storage Backend**:
+   - Supabase integration for persistent storage
+   - Local caching for performance
+   - File system interaction for large files
+
+3. **Module Integration**:
+   - Clean interfaces with other Deebo modules
+   - Event-based communication
+   - Consistent error handling
+   - Resource management
+
+### 7.4 Architecture
+
+```mermaid
+graph TD
+    A[Client/Cline] -->|Debugging Payload| B[CodeIngestionManager]
+    B --> C{Session Exists?}
+    C -->|Yes| D[Update Session]
+    C -->|No| E[Create Session]
+    D --> F[Process Files]
+    E --> F
+    F --> G[Extract Metadata]
+    F --> H[Calculate Diff]
+    G --> I[Storage Manager]
+    H --> I
+    I --> J[Memory Cache]
+    I --> K[Disk Cache]
+    I --> L[Supabase DB]
+```
+
+### 7.5 Future Enhancements
+
+1. **Extended Language Support**:
+   - Add more language-specific analyzers
+   - Enhance dependency detection
+   - Support for more file types
+
+2. **Advanced Caching**:
+   - Distributed caching support
+   - More sophisticated eviction policies
+   - Cache preloading for known patterns
+
+3. **Performance Optimization**:
+   - Parallel processing for large codebases
+   - Streaming support for large files
+   - Better compression algorithms
+
+4. **Enhanced Analytics**:
+   - Code quality metrics
+   - Change pattern analysis
+   - Impact assessment tools
+
+The Code Ingestion Module now provides a solid foundation for Deebo's debugging capabilities, with efficient code processing, robust version control, and optimized performance characteristics.
+
+⸻
+
+Conclusion
+
+Deebo aims to revolutionize the debugging process by combining automated code ingestion, isolated execution via Docker, and intelligent analysis through advanced language models. With a composable core API at its heart, Deebo is designed for scalability, reliability, and seamless integration with developer tools like Cline. This comprehensive roadmap outlines a clear path from planning to MVP release, ensuring that every critical component is addressed and that future enhancements can be built upon a robust foundation.
+
+By following this plan, you'll build a debugging assistant that not only saves time and reduces errors but also adapts and evolves with your development workflow. Let me know if you need further details or modifications to this plan!

@@ -1,0 +1,43 @@
+-- Create debugging_sessions table
+CREATE TABLE IF NOT EXISTS debugging_sessions (
+    id UUID PRIMARY KEY,
+    context TEXT NOT NULL,
+    error TEXT NOT NULL,
+    logs TEXT NOT NULL,
+    snapshot_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    metadata JSONB
+);
+
+-- Create snapshots table
+CREATE TABLE IF NOT EXISTS snapshots (
+    id UUID PRIMARY KEY,
+    session_id UUID REFERENCES debugging_sessions(id),
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    storage_path TEXT NOT NULL,
+    metadata JSONB,
+    CONSTRAINT fk_session
+        FOREIGN KEY(session_id)
+        REFERENCES debugging_sessions(id)
+        ON DELETE CASCADE
+);
+
+-- Create version_history table
+CREATE TABLE IF NOT EXISTS version_history (
+    id UUID PRIMARY KEY,
+    session_id UUID REFERENCES debugging_sessions(id),
+    snapshot_id UUID REFERENCES snapshots(id),
+    version INT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    diff JSONB,
+    CONSTRAINT fk_session
+        FOREIGN KEY(session_id)
+        REFERENCES debugging_sessions(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_snapshot
+        FOREIGN KEY(snapshot_id)
+        REFERENCES snapshots(id)
+        ON DELETE CASCADE
+);
